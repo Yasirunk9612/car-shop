@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
-import Image from "next/image";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 export default function Hero() {
   const [videoError, setVideoError] = useState(false);
@@ -11,19 +10,26 @@ export default function Hero() {
   const opacity = useTransform(scrollY, [0, 300], [1, 0.9]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoPreparedRef = useRef(false);
 
-  const setSafariFriendlyAutoplayAttrs = (v: HTMLVideoElement) => {
+  const prepareVideoForAutoplay = (v: HTMLVideoElement) => {
+    if (videoPreparedRef.current) return;
+    videoPreparedRef.current = true;
+
     // iOS Safari is picky: setting both properties + attributes helps.
     v.muted = true;
     v.defaultMuted = true;
     v.playsInline = true;
-    v.setAttribute("muted", "");
-    v.setAttribute("playsinline", "");
-    v.setAttribute("webkit-playsinline", "true");
-    v.setAttribute("autoplay", "");
-    v.setAttribute("loop", "");
-    v.setAttribute("fetchpriority", "high");
     v.preload = "auto";
+
+    v.setAttribute("muted", "true");
+    v.setAttribute("playsinline", "true");
+    v.setAttribute("webkit-playsinline", "true");
+    v.setAttribute("autoplay", "true");
+    v.setAttribute("loop", "true");
+    v.setAttribute("fetchpriority", "high");
+
+    // Call load() once to kick-start buffering; calling repeatedly can cause stutter.
     try {
       v.load();
     } catch {}
@@ -31,48 +37,46 @@ export default function Hero() {
 
   const tryPlay = async (v: HTMLVideoElement) => {
     // Multiple attempts reduce first-load flakiness across browsers.
-    setSafariFriendlyAutoplayAttrs(v);
-    try {
-      await v.play();
-      return true;
-    } catch {
-      // Retry a couple times with small delays
-      await new Promise((r) => setTimeout(r, 150));
+    prepareVideoForAutoplay(v);
+    const attempt = async () => {
       try {
-        await v.play();
+        const p = v.play();
+        if (p) await p;
         return true;
       } catch {
-        await new Promise((r) => setTimeout(r, 300));
-        try {
-          await v.play();
-          return true;
-        } catch {
-          return false;
-        }
+        return false;
       }
-    }
+    };
+
+    if (await attempt()) return true;
+    await new Promise((r) => setTimeout(r, 150));
+    if (await attempt()) return true;
+    await new Promise((r) => setTimeout(r, 300));
+    return attempt();
   };
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
-    setSafariFriendlyAutoplayAttrs(v);
+    prepareVideoForAutoplay(v);
 
     // Attempt immediately, then again on key readiness events.
     void tryPlay(v);
 
-    const onCanPlay = () => {
-      setVideoLoaded(true);
-      void tryPlay(v);
+    const markLoadedIfPlaying = () => {
+      if (!v.paused && v.currentTime > 0) setVideoLoaded(true);
     };
-    const onLoadedData = () => {
-      setVideoLoaded(true);
-      void tryPlay(v);
-    };
+
+    const onCanPlay = () => void tryPlay(v);
+    const onLoadedData = () => void tryPlay(v);
+    const onPlaying = () => setVideoLoaded(true);
+    const onTimeUpdate = () => markLoadedIfPlaying();
 
     v.addEventListener("canplay", onCanPlay);
     v.addEventListener("loadeddata", onLoadedData);
+    v.addEventListener("playing", onPlaying);
+    v.addEventListener("timeupdate", onTimeUpdate);
 
     // Some platforms only allow autoplay after a gesture.
     const onFirstInteraction = () => {
@@ -86,6 +90,8 @@ export default function Hero() {
     return () => {
       v.removeEventListener("canplay", onCanPlay);
       v.removeEventListener("loadeddata", onLoadedData);
+      v.removeEventListener("playing", onPlaying);
+      v.removeEventListener("timeupdate", onTimeUpdate);
       window.removeEventListener("touchstart", onFirstInteraction);
       window.removeEventListener("click", onFirstInteraction);
     };
@@ -123,46 +129,24 @@ export default function Hero() {
   return (
     <section className="relative min-h-[90vh] md:min-h-screen overflow-hidden">
       {/* Video Background */}
-      {!videoError ? (
-        <video
-          className="hero-video absolute inset-0 w-full h-full object-cover"
-          src="/videos/hero.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          controlsList="nodownload noplaybackrate noremoteplayback nofullscreen"
-          ref={videoRef}
-          onError={() => setVideoError(true)}
-          onLoadedData={() => setVideoLoaded(true)}
-          onCanPlay={() => setVideoLoaded(true)}
-          controls={false}
-          disablePictureInPicture
-        />
-      ) : (
-        <div className="absolute inset-0 japanese-pattern" />
-      )}
+      <video
+        className="hero-video absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        controlsList="nodownload noplaybackrate noremoteplayback nofullscreen"
+        ref={videoRef}
+        onError={() => setVideoError(true)}
+        onPlaying={() => setVideoLoaded(true)}
+        controls={false}
+        disablePictureInPicture
+      >
+        <source src="/videos/hero.mp4" type="video/mp4" />
+      </video>
 
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 hero-overlay" />
-
-      {/* Minimal video-loading overlay (logo only) */}
-      <AnimatePresence>
-        {!videoLoaded && !videoError && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.6 } }}
-            className="absolute inset-0 z-10 grid place-items-center pointer-events-none"
-          >
-            <div className="text-center">
-              <Image src="/logo.PNG" alt="DK Motors" width={96} height={96} priority className="mx-auto opacity-85" />
-              <div className="mt-5 h-px w-40 mx-auto bg-gradient-to-r from-transparent via-red-600/70 to-transparent" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* No loading overlays/effects */}
 
       {/* Content */}
       <motion.div style={{ y, opacity }} className="relative z-10 flex items-center justify-center min-h-[90vh] md:min-h-screen px-6 text-center">
