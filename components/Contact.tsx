@@ -1,13 +1,17 @@
 "use client";
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail, MessageCircle, Instagram, Facebook, Youtube } from "lucide-react";
+import { Phone, Mail, MessageCircle, Facebook } from "lucide-react";
 
 const FORM_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // Replace with your Formspree ID
 
 export default function Contact() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const whatsappNumber = "94770729275";
+  const whatsappMessage = "Hi DK Motors, I'm interested in importing a vehicle. Please contact me.";
+  const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,7 +93,7 @@ export default function Contact() {
               </div>
             </div>
           </a>
-          <a href="https://wa.me/94770729275" target="_blank" rel="noopener" className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur p-4 hover:bg-white/[0.06] transition">
+          <a href={whatsappHref} target="_blank" rel="noopener" className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur p-4 hover:bg-white/[0.06] transition">
             <div className="flex items-start gap-3">
               <MessageCircle className="w-5 h-5 text-red-500" aria-hidden />
               <div>
@@ -175,14 +179,11 @@ export default function Contact() {
           className="mt-10 flex items-center justify-center gap-6 text-white/80"
         >
           {/* Update hrefs once accounts are available */}
-          <a href="#" aria-label="Instagram" className="p-3 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition">
-            <Instagram className="w-5 h-5" />
-          </a>
-          <a href="#" aria-label="Facebook" className="p-3 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition">
+          <a href="https://www.facebook.com/share/1C532q5Vop/?mibextid=wwXIfr" aria-label="Facebook" className="p-3 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition">
             <Facebook className="w-5 h-5" />
           </a>
-          <a href="#" aria-label="YouTube" className="p-3 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition">
-            <Youtube className="w-5 h-5" />
+          <a href="https://www.tiktok.com/@dk_motors0?is_from_webapp=1&sender_device=pc" aria-label="TikTok" className="px-4 py-3 rounded-full border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition">
+            <span className="text-xs font-semibold tracking-wide">TikTok</span>
           </a>
         </motion.div>
       </div>

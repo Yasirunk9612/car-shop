@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import Image from "next/image";
 
 export default function Hero() {
   const [videoError, setVideoError] = useState(false);
@@ -21,7 +22,11 @@ export default function Hero() {
     v.setAttribute("webkit-playsinline", "true");
     v.setAttribute("autoplay", "");
     v.setAttribute("loop", "");
+    v.setAttribute("fetchpriority", "high");
     v.preload = "auto";
+    try {
+      v.load();
+    } catch {}
   };
 
   const tryPlay = async (v: HTMLVideoElement) => {
@@ -142,7 +147,22 @@ export default function Hero() {
       {/* Overlay for readability */}
       <div className="absolute inset-0 hero-overlay" />
 
-      {/* Loading overlay removed per request */}
+      {/* Minimal video-loading overlay (logo only) */}
+      <AnimatePresence>
+        {!videoLoaded && !videoError && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.6 } }}
+            className="absolute inset-0 z-10 grid place-items-center pointer-events-none"
+          >
+            <div className="text-center">
+              <Image src="/logo.PNG" alt="DK Motors" width={96} height={96} priority className="mx-auto opacity-85" />
+              <div className="mt-5 h-px w-40 mx-auto bg-gradient-to-r from-transparent via-red-600/70 to-transparent" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       <motion.div style={{ y, opacity }} className="relative z-10 flex items-center justify-center min-h-[90vh] md:min-h-screen px-6 text-center">
