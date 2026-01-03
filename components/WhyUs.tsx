@@ -69,7 +69,6 @@ export default function WhyUs() {
           <span className="inline-flex items-center gap-3 text-sm">
             <span className="text-white font-medium">98% client satisfaction</span>
             <span className="h-px w-8 bg-white/10" />
-            <span>200+ vehicles delivered</span>
           </span>
         </motion.div>
       </div>

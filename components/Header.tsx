@@ -28,7 +28,7 @@ export default function Header() {
               <a href="#services" className="text-gray-300 hover:text-white transition">Services</a>
               <a href="#why-us" className="text-gray-300 hover:text-white transition">Why Us</a>
               <a href="#process" className="text-gray-300 hover:text-white transition">Process</a>
-              <a href="#instagram" className="text-gray-300 hover:text-white transition">Instagram</a>
+              {/*<a href="#instagram" className="text-gray-300 hover:text-white transition">Instagram</a>*/}
               <a href="#contact" className="px-3 py-2 rounded-md bg-red-600 text-white neon-red-soft neon-hover transition hover:bg-red-700">Begin the Process</a>
             </nav>
 
@@ -36,11 +36,11 @@ export default function Header() {
             <button
               onClick={() => setOpen(!open)}
               aria-label="Toggle menu"
-              className="md:hidden inline-flex items-center justify-center rounded-md border border-white/10 bg-black/50 p-2 text-white"
+              className="md:hidden inline-flex flex-col items-center justify-center gap-1 rounded-md border border-white/10 bg-black/50 p-2 text-white"
             >
               <span className="block w-5 h-[2px] bg-white" />
-              <span className="block w-5 h-[2px] bg-white mt-1" />
-              <span className="block w-5 h-[2px] bg-white mt-1" />
+              <span className="block w-5 h-[2px] bg-white" />
+              <span className="block w-5 h-[2px] bg-white" />
             </button>
           </div>
         </div>

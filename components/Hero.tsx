@@ -19,14 +19,18 @@ export default function Hero() {
     // iOS Safari is picky: setting both properties + attributes helps.
     v.muted = true;
     v.defaultMuted = true;
+    v.volume = 0;
+    v.autoplay = true;
+    v.loop = true;
     v.playsInline = true;
     v.preload = "auto";
 
-    v.setAttribute("muted", "true");
-    v.setAttribute("playsinline", "true");
+    // Some browsers look for the literal attributes, not just properties.
+    v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
     v.setAttribute("webkit-playsinline", "true");
-    v.setAttribute("autoplay", "true");
-    v.setAttribute("loop", "true");
+    v.setAttribute("autoplay", "");
+    v.setAttribute("loop", "");
     v.setAttribute("fetchpriority", "high");
 
     // Call load() once to kick-start buffering; calling repeatedly can cause stutter.
@@ -68,15 +72,25 @@ export default function Hero() {
       if (!v.paused && v.currentTime > 0) setVideoLoaded(true);
     };
 
+    const onLoadedMetadata = () => void tryPlay(v);
     const onCanPlay = () => void tryPlay(v);
     const onLoadedData = () => void tryPlay(v);
     const onPlaying = () => setVideoLoaded(true);
     const onTimeUpdate = () => markLoadedIfPlaying();
 
+    v.addEventListener("loadedmetadata", onLoadedMetadata);
     v.addEventListener("canplay", onCanPlay);
     v.addEventListener("loadeddata", onLoadedData);
     v.addEventListener("playing", onPlaying);
     v.addEventListener("timeupdate", onTimeUpdate);
+
+    // Retry when the page becomes visible again (iOS can pause/deny autoplay in background).
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void tryPlay(v);
+    };
+    const onFocus = () => void tryPlay(v);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", onFocus);
 
     // Some platforms only allow autoplay after a gesture.
     const onFirstInteraction = () => {
@@ -88,10 +102,13 @@ export default function Hero() {
     window.addEventListener("click", onFirstInteraction);
 
     return () => {
+      v.removeEventListener("loadedmetadata", onLoadedMetadata);
       v.removeEventListener("canplay", onCanPlay);
       v.removeEventListener("loadeddata", onLoadedData);
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("timeupdate", onTimeUpdate);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("focus", onFocus);
       window.removeEventListener("touchstart", onFirstInteraction);
       window.removeEventListener("click", onFirstInteraction);
     };
